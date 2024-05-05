@@ -6,9 +6,18 @@ const filename = 'db.csv'
 router.get('/', function(req, res, next) {
   res.send('respond with a resource');
 });
-router.post('/register', function(req, res, next) {
-  const fileString = `${req.body.name},${req.body.email},${req.body.mobNo},${req.body.password}\n`
+router.post('/register', async function(req, res, next) {
   try{
+
+    const data = await fs.readFileSync(filename, { encoding: 'utf8', flag: 'r' });
+    let id=0;
+    if(data===''){
+      id=1;
+    }else{
+      const users = data.split('\n');
+      id=users.length;
+    }
+    const fileString = `${id},${req.body.name},${req.body.email},${req.body.mobNo},${req.body.password}\n`;
     fs.appendFileSync(filename, fileString, 'utf8', function (err) {
       if (err) {
         console.log('Some error occured - file either not saved or corrupted file saved.');
@@ -31,7 +40,7 @@ router.post('/login', async function(req, res, next) {
     const password = req.body.password;
     const user = users.find(user => {
       const userDetails = user.split(',');
-      if(userName === userDetails[1] && password === userDetails[3]){
+      if(userName === userDetails[2] && password === userDetails[4]){
         return true;
       }
     })
