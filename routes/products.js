@@ -1,5 +1,6 @@
 var express = require("express");
 var router = express.Router();
+const authenticateToken = require('../autheticateToken');
 var fs = require("fs");
 const filename = "products.csv";
 
@@ -17,7 +18,7 @@ function getProductObj(productString) {
 
   return productObj;
 }
-router.get("/", async function (req, res, next) {
+router.get("/", authenticateToken, async function (req, res, next) {
   try {
     const fileData = await fs.readFileSync(filename, {
       encoding: "utf8",
@@ -39,7 +40,7 @@ router.get("/", async function (req, res, next) {
     console.log(error);
   }
 });
-router.post("/product", async function (req, res, next) {
+router.post("/product", authenticateToken, async function (req, res, next) {
   try {
     const data = await fs.readFileSync(filename, {
       encoding: "utf8",
@@ -71,7 +72,7 @@ router.post("/product", async function (req, res, next) {
   }
 });
 
-router.delete("/product/:id", async function (req, res, next) {
+router.delete("/product/:id", authenticateToken, async function (req, res, next) {
   try {
     const id = req.params.id;
     if (!id) {
@@ -109,7 +110,7 @@ router.delete("/product/:id", async function (req, res, next) {
   }
 });
 
-router.get("/product/:id", async function (req, res, next) {
+router.get("/product/:id", authenticateToken, async function (req, res, next) {
   try {
     const id = +req.params.id;
     const products = await fs.readFileSync(filename, {

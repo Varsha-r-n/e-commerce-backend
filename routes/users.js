@@ -1,31 +1,27 @@
 var express = require('express');
 var router = express.Router();
-var fs = require('fs');
-const filename = 'db.csv'
+const UserModel = require("../modals/User")
+
+const jwt = require('jsonwebtoken');
+const JWT_SECRET = "ayivddkkeezbdsjxhzurjzixekoiipnq";
+const authenticateToken = require('../autheticateToken');
 /* GET users listing. */
-router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+router.get('/', authenticateToken, async function(req, res, next) {
+  let user = await UserModel.findById(req.user.id);
+  res.send({
+    email: user.email,
+    mobNo: user.mobNo,
+    name: user.name
+  });
 });
 router.post('/register', async function(req, res, next) {
   try{
-
-    const data = await fs.readFileSync(filename, { encoding: 'utf8', flag: 'r' });
-    let id=0;
-    if(data===''){
-      id=1;
-    }else{
-      const users = data.split('\n');
-      id=users.length;
-    }
-    const fileString = `${id},${req.body.name},${req.body.email},${req.body.mobNo},${req.body.password}\n`;
-    fs.appendFileSync(filename, fileString, 'utf8', function (err) {
-      if (err) {
-        console.log('Some error occured - file either not saved or corrupted file saved.');
-      } else{
-        console.log('It\'s saved!');
-      }
-    });
-    res.send(`User ${req.body.name} is saved.`);
+    const SaveUser = new UserModel(req.body)
+    const user = await SaveUser.save();
+    console.log(user)
+    console.log(user.id)
+    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET);
+    res.json({ token });
   }catch(error){
     console.log(error);
     throw error;
@@ -34,18 +30,21 @@ router.post('/register', async function(req, res, next) {
 
 router.post('/login', async function(req, res, next) {
   try{
-    const data = await fs.readFileSync(filename, { encoding: 'utf8', flag: 'r' });
-    const users = data.split('\n');
-    const userName = req.body.username;
-    const password = req.body.password;
-    const user = users.find(user => {
-      const userDetails = user.split(',');
-      if(userName === userDetails[2] && password === userDetails[4]){
-        return true;
-      }
-    })
-    if(user){
-      res.send('success');
+     const loginCredentials = {
+      email: req.body.username,
+      password: req.body.password
+     }
+    let user = await UserModel.find(loginCredentials);
+    if(user.length > 0){
+      user = user[0];
+      console.log(user)
+      const token = jwt.sign({ id: user.id, username: user.email }, JWT_SECRET);
+      // res.cookie("access-token", token, {
+      //   maxAge: 60 * 60 * 24 * 30 * 1000, //30 days
+      //   secure: false,
+      //   httpOnly: false,
+      // });
+      res.json({ token });
     }else{
       res.status(403).send('Unauthorized')
     }
