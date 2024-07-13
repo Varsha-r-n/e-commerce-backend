@@ -1,21 +1,25 @@
-var express = require("express");
+ var express = require("express");
 var router = express.Router();
 const authenticateToken = require("../autheticateToken");
-const ProductModel = require("../modals/Product");
+const ProductCategoryModel = require("../modals/ProductCategory");
 
 router.get("/", authenticateToken, async function (req, res, next) {
   try {
-    let products = await ProductModel.find({});
-    res.send(products);
+    let productCategory = await ProductCategoryModel.find({});
+    res.send(productCategory);
   } catch (error) {
     console.log(error);
   }
 });
 router.post("/", authenticateToken, async function (req, res, next) {
   try {
-    const SaveProduct = new ProductModel(req.body)
-    const product = await SaveProduct.save();
-    res.send(`products ${req.body.productName} is saved.`);
+    const productCategoryInput = {
+        "productCategoryName": req.body.productCategoryName,
+        "productCategoryOwner": req.user.id
+    }
+    const productCategory = new ProductCategoryModel(productCategoryInput)
+    const productCat = await productCategory.save();
+    res.send(`productCategory ${req.body.productCategoryName} is saved.`);
   } catch (error) {
     console.log(error);
     throw error;
@@ -29,7 +33,7 @@ router.delete(
     try {
       const id = req.params.id;
       if(id){
-        let product = await ProductModel.findByIdAndDelete(id);
+        let productCategory = await ProductCategoryModel.findByIdAndDelete(id);
         res.send(`${id} deleted successfully`);
       }else{
         res.status(400).send("Please send valid id");
@@ -44,8 +48,8 @@ router.delete(
 router.get("/:id", authenticateToken, async function (req, res, next) {
   try {
     const id = req.params.id;
-    let product = await ProductModel.findById(id);
-    res.send(product);
+    let productCategory = await ProductCategoryModel.findById(id);
+    res.send(productCategory);
   } catch (error) {
     console.log(error);
   }
